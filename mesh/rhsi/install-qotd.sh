@@ -143,10 +143,10 @@ fn_undeploy() {
     kubectl get pods --namespace $1
     kubectl get pods --namespace $1-load
 
-    echo ""
-    echo -e "${FG_BBLACK}Delete namespace $1 $1-load ... ${FG_OFF}"
-    kubectl delete namespace $1
-    kubectl delete namespace $1-load
+#    echo ""
+#    echo -e "${FG_BBLACK}Delete namespace $1 $1-load ... ${FG_OFF}"
+#    kubectl delete namespace $1
+#    kubectl delete namespace $1-load
 }
 
 QOTD=all

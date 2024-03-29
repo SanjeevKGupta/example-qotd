@@ -23,6 +23,9 @@
 #
 # make undeploy NAMESPACE=<namespace> CLUSTER_CONTEXT=<cluster-context>
 #
+# Example: patching a service. 
+# kubectl patch service qotd-quote --patch '{"metadata": {"labels": {"app": "qotd-quote"}}}'
+#
 
 # Check all necessary environment variables
 -include env.var.app.cmd.mk
