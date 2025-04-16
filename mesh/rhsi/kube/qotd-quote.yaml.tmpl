@@ -29,15 +29,15 @@ spec:
           value: "false"
         - name: ANOMALY_GENERATOR_URL
         - name: DB_HOST
-          value: qotd-db
+          value: ${QOTD_DB_HOST}
         - name: DB_PORT
-          value: "3306"
+          value: ${QOTD_DB_PORT}
         - name: DB_USER
-          value: root
+          value: ${QOTD_DB_USER}
         - name: DB_PASS
-          value: root
+          value: ${QOTD_DB_PASS}
         - name: DB_NAME
-          value: qotd
+          value: ${QOTD_DB_NAME}
         - name: INSTANA_AGENT_HOST
           value: NOT_USED
         image: registry.gitlab.com/quote-of-the-day/quote-service:v5.1.0

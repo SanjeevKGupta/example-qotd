@@ -1,6 +1,3 @@
-# export MY_NAME=qotd-db
-# export MY_PORT=3306
-
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -28,9 +25,9 @@ spec:
       containers:
       - env:
         - name: MYSQL_ROOT_PASSWORD
-          value: root
+          value: ${QOTD_DB_PASS}
         - name: MYSQL_DATABASE
-          value: qotd
+          value: ${QOTD_DB_NAME}
         image: registry.gitlab.com/quote-of-the-day/qotd-db:v5.1.0
         imagePullPolicy: Always
         name: qotd-db
