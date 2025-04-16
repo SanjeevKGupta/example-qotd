@@ -1,45 +1,20 @@
 #
 # Makefile : qotd 5.1.0
 #
-# 1. Requires CLUSTER_HOST_URL
-#    For IBM Cloud hosted deployment for ROKS and IKS, get the CLUSTER_HOST_URL using
-#    kubectl get cm ibm-cloud-cluster-ingress-info -n kube-system -o 'jsonpath={.data.ingress-subdomain}'
-#
-# 2. Requires CLUSTER_TYPE
-#    Either ROKS / IKS 
-#    
-# 3. Requires NAMESPACE: to be installed in.
-#
-# 4. Requires CLUSTER_CONTEXT as short-hand renamed-context
-#    4.1 Log into the target cluster
-#    4.2 Rename the current context for example as follows
-#        kubectl config rename-context $(kubectl config current-context) kc-iks-dal
-#
-# Example use:
-#
-# make qotd-all CLUSTER_HOST_URL=<cluster-host-url> CLUSTER_TYPE=<ROKS/IKS> NAMESPACE=<namespace> CLUSTER_CONTEXT=<cluster-context>
-#
-# make qotd-backend CLUSTER_HOST_URL=<cluster-host-url> CLUSTER_TYPE=<ROKS/IKS> NAMESPACE=<namespace> CLUSTER_CONTEXT=<cluster-context>
-#
-# make undeploy NAMESPACE=<namespace> CLUSTER_CONTEXT=<cluster-context>
-#
-# Example: patching a service. 
-# kubectl patch service qotd-quote --patch '{"metadata": {"labels": {"app": "qotd-quote"}}}'
+# 1. Requires NAMESPACE: to be installed in.
 #
 
 # Check all necessary environment variables
 -include env.var.app.cmd.mk
 
-# Check if CLUSTER_HOST_URL is provided
-check_var_host:
-	$(call cmd_var_check,CLUSTER_HOST_URL,as make <target> CLUSTER_HOST_URL=<host-url>)
-	@echo ""
-	@echo "CLUSTER_HOST_URL: ${CLUSTER_HOST_URL}"
+create-namespace: check_var_namespace check_var_cluster_context
+	kubectl create namespace ${NAMESPACE}
 
-# Check if CLUSTER_TYPE is provided
-check_var_type:
-	$(call cmd_var_check,CLUSTER_TYPE,as make <target> CLUSTER_TYPE=<host-type>)
-	@echo "    CLUSTER_TYPE: ${CLUSTER_TYPE}"
+apply-qotd-services: apply-author apply-engraving apply-image apply-pdf apply-qrcode apply-quote apply-rating apply-web
+	@echo "Services DEPLOYED"
+
+delete-qotd-services: delete-author delete-engraving delete-image delete-pdf delete-qrcode delete-quote delete-rating delete-web
+	@echo "Services DELETED"
 
 # Check if NAMESPACE is provided
 check_var_namespace:
@@ -51,10 +26,57 @@ check_var_cluster_context:
 	$(call cmd_var_check,CLUSTER_CONTEXT,as make <target> CLUSTER_CONTEXT=<cluster-context>)
 	@echo " CLUSTER_CONTEXT: ${CLUSTER_CONTEXT}"
 
+qotd-export:
+	export NAMESPACE=${NAMESPACE}
+
+apply-author: check_var_namespace check_var_cluster_context qotd-export
+	envsubst < ./kube/qotd-author.yaml.tmpl | kubectl apply -n ${NAMESPACE} -f-
+delete-author: check_var_namespace check_var_cluster_context qotd-export
+	envsubst < ./kube/qotd-author.yaml.tmpl | kubectl delete -n ${NAMESPACE} -f-
+
+apply-engraving: check_var_namespace check_var_cluster_context qotd-export
+	envsubst < ./kube/qotd-engraving.yaml.tmpl | kubectl apply -n ${NAMESPACE} -f-
+delete-engraving: check_var_namespace check_var_cluster_context qotd-export
+	envsubst < ./kube/qotd-engraving.yaml.tmpl | kubectl delete -n ${NAMESPACE} -f-
+
+apply-image: check_var_namespace check_var_cluster_context qotd-export
+	envsubst < ./kube/qotd-image.yaml.tmpl | kubectl apply -n ${NAMESPACE} -f-
+delete-image: check_var_namespace check_var_cluster_context qotd-export
+	envsubst < ./kube/qotd-image.yaml.tmpl | kubectl delete -n ${NAMESPACE} -f-
+
+apply-pdf: check_var_namespace check_var_cluster_context qotd-export
+	envsubst < ./kube/qotd-pdf.yaml.tmpl | kubectl apply -n ${NAMESPACE} -f-
+delete-pdf: check_var_namespace check_var_cluster_context qotd-export
+	envsubst < ./kube/qotd-pdf.yaml.tmpl | kubectl delete -n ${NAMESPACE} -f-
+
+apply-qrcode: check_var_namespace check_var_cluster_context qotd-export
+	envsubst < ./kube/qotd-qrcode.yaml.tmpl | kubectl apply -n ${NAMESPACE} -f-
+delete-qrcode: check_var_namespace check_var_cluster_context qotd-export
+	envsubst < ./kube/qotd-qrcode.yaml.tmpl | kubectl delete -n ${NAMESPACE} -f-
+
+apply-quote: check_var_namespace check_var_cluster_context qotd-export
+	envsubst < ./kube/qotd-quote.yaml.tmpl | kubectl apply -n ${NAMESPACE} -f-
+delete-quote: check_var_namespace check_var_cluster_context qotd-export
+	envsubst < ./kube/qotd-quote.yaml.tmpl | kubectl delete -n ${NAMESPACE} -f-
+
+apply-rating: check_var_namespace check_var_cluster_context qotd-export
+	envsubst < ./kube/qotd-rating.yaml.tmpl | kubectl apply -n ${NAMESPACE} -f-
+delete-rating: check_var_namespace check_var_cluster_context qotd-export
+	envsubst < ./kube/qotd-rating.yaml.tmpl | kubectl delete -n ${NAMESPACE} -f-
+
+apply-web: check_var_namespace check_var_cluster_context qotd-export
+	envsubst < ./kube/qotd-web.yaml.tmpl | kubectl apply -n ${NAMESPACE} -f-
+delete-web: check_var_namespace check_var_cluster_context qotd-export
+	envsubst < ./kube/qotd-web.yaml.tmpl | kubectl delete -n ${NAMESPACE} -f-
+
+apply-db: check_var_namespace check_var_cluster_context qotd-export
+	envsubst < ./kube/qotd-db.yaml.tmpl | kubectl apply -n ${NAMESPACE} -f-
+delete-db: check_var_namespace check_var_cluster_context qotd-export
+	envsubst < ./kube/qotd-db.yaml.tmpl | kubectl delete -n ${NAMESPACE} -f-
+
 # Deploy all services using helm chart as specified in install-qotd.sh script. -i option
-qotd-all: check_var_host check_var_type check_var_namespace check_var_cluster_context
-	kubectl config use-context ${CLUSTER_CONTEXT}
-	./install-qotd.sh -i -c ${CLUSTER_HOST_URL} -t ${CLUSTER_TYPE} -n ${NAMESPACE}
+#qotd-services: check_var_namespace check_var_cluster_context
+#	kubectl config use-context ${CLUSTER_CONTEXT}
 
 # Deploy all services except qotd-web using helm chart as specified in install-qotd.sh script.
 # After full deploy, delete QOTD_WEB service -i and -s options
