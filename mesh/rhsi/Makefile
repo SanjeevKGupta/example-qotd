@@ -1,8 +1,15 @@
 #
 # Makefile : qotd 5.1.0
 #
-# 1. Requires NAMESPACE: to be installed in.
+# Requires
+#   NAMESPACE: to be installed in.
+#   CLUSTER_CONTEXT: CL]luster where K8s resources will be created
 #
+# usage:
+#   make apply-qotd-services NAMESPACE=sn-qotd CLUSTER_CONTEXT=kubeconfig-iks-dc
+#
+# You may want to modify qotd-web.yaml.tmpl if want to preserve LoadBalancer
+#   make delete-qotd-services NAMESPACE=sn-qotd CLUSTER_CONTEXT=kubeconfig-iks-dc
 
 # Check all necessary environment variables
 -include env.var.app.cmd.mk
@@ -10,9 +17,11 @@
 create-namespace: check_var_namespace check_var_cluster_context
 	kubectl create namespace ${NAMESPACE}
 
+# Deploy all the pods, services except qotd-db
 apply-qotd-services: apply-author apply-engraving apply-image apply-pdf apply-qrcode apply-quote apply-rating apply-web
 	@echo "Services DEPLOYED"
 
+# Deletes all the pods, services except qotd-db. You may want to modify qotd-web.yaml.tmpl if want to preserve LoadBalancer
 delete-qotd-services: delete-author delete-engraving delete-image delete-pdf delete-qrcode delete-quote delete-rating delete-web
 	@echo "Services DELETED"
 
@@ -73,25 +82,4 @@ apply-db: check_var_namespace check_var_cluster_context qotd-export
 	envsubst < ./kube/qotd-db.yaml.tmpl | kubectl apply -n ${NAMESPACE} -f-
 delete-db: check_var_namespace check_var_cluster_context qotd-export
 	envsubst < ./kube/qotd-db.yaml.tmpl | kubectl delete -n ${NAMESPACE} -f-
-
-# Deploy all services using helm chart as specified in install-qotd.sh script. -i option
-#qotd-services: check_var_namespace check_var_cluster_context
-#	kubectl config use-context ${CLUSTER_CONTEXT}
-
-# Deploy all services except qotd-web using helm chart as specified in install-qotd.sh script.
-# After full deploy, delete QOTD_WEB service -i and -s options
-qotd-beckend: check_var_host check_var_type check_var_namespace check_var_cluster_context
-	kubectl config use-context ${CLUSTER_CONTEXT}
-	./install-qotd.sh -i -s -c ${CLUSTER_HOST_URL} -t ${CLUSTER_TYPE} -n ${NAMESPACE}
-
-# UnDeploy all services. -u option
-undeploy: check_var_namespace check_var_cluster_context
-	kubectl config use-context ${CLUSTER_CONTEXT}
-	./install-qotd.sh -u -n ${NAMESPACE}
-
-# Experimentatl. Removal of all services except qotd-web renders the qotd-web pod go into crashLoopBack
-#qotd-web: check_var_host check_var_type check_var_namespace check_var_cluster_context
-#	kubectl config use-context ${CLUSTER_CONTEXT}
-#	./install-qotd.sh -i -w -c ${CLUSTER_HOST_URL} -t ${CLUSTER_TYPE} -n ${NAMESPACE}
-
 
